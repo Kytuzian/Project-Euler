@@ -11,25 +11,28 @@ incrementEach :: [Int] -> [[Int]]
 incrementEach [] = []
 incrementEach (x:xs) = [x + 1: xs] ++ (map (x :) $ incrementEach xs)
 
-incrementDigitsIf :: ([Int] -> Bool) -> [Int] -> [Int]
-incrementDigitsIf _ [] = [1]
-incrementDigitsIf f num@(d:ds)
-    | f num = d + 1 : ds
-    | otherwise = 0 : incrementDigitsIf f ds
+incrementAt :: [Int] -> Int -> [Int]
+incrementAt xs i = take i xs ++ [e + 1] ++ drop (i + 1) xs
+    where e = xs !! i
+
+setAt :: [Int] -> Int -> Int -> [Int]
+setAt xs i e = take i xs ++ [e] ++ drop (i + 1) xs
+
+incrementDigitsIf :: ([Int] -> Bool) -> [Int] -> Int -> [Int]
+incrementDigitsIf f ds i
+    | i >= length ds = [0]
+    | f (incrementAt ds i) = incrementAt ds i
+    | otherwise = incrementDigitsIf f (setAt ds i 0) (i + 1)
 
 nthPrime n = fromIntegral $ Primes.primes !! n
 
--- sumPrimePowers :: Int -> [Int] -> [Int]
+-- sumPrimePowers :: Int -> [Int] -> [Int](sumPrimePower $ map nthPrime i) < 1000
 sumPrimePowers limit ns
-    | length next > 0 = nextRes ++ (foldl (++) [] $ map (memSumPrimePowers limit) $ nextNs)
+    | length nextNs == length ns = sumPrimePower ps : sumPrimePowers limit nextNs
     | otherwise = []
-    where next = filter (\i -> fst i < limit) $ map (\i -> (sumPrimePower (map nthPrime i), i)) $ incrementEach ns
-          nextNs = map snd next
-          nextRes = map fst next
-          ps = map nthPrime ns
-
-memSumPrimePowers = memoize sumPrimePowers
+    where ps = map nthPrime ns
+          nextNs = incrementDigitsIf ((< limit) . sumPrimePower . map nthPrime) ns 0
 
 p87 limit = nub $ 28 : sumPrimePowers limit [0,0,0]
 
-main = print $ length $ p87 2500
+main = print $ length $ p87 (50 * 10^6)
