@@ -7,9 +7,8 @@ remove (x:xs) e
     | otherwise = x : remove xs e
 
 passcodeWorks :: [Int] -> [Int] -> Bool
-passcodeWorks [] [] = True
-passcodeWorks [] _ = False
 passcodeWorks _ [] = True
+passcodeWorks [] _ = False
 passcodeWorks code@(c:cs) request@(r:rs)
     | c == r = passcodeWorks cs rs
     | otherwise = passcodeWorks cs request
@@ -22,7 +21,6 @@ addToPasscode code@(c:cs) request@(r:[])
     | c == r = code
     | otherwise = r : cs
 addToPasscode code@(c:cs) request@(r:nr:rs)
-    | c == r && nr `elem` cs = c : addToPasscode cs rs
     | c == nr = r : c : addToPasscode nextCsR rs
     | c == r = c : nr : addToPasscode nextCsNr rs
     | otherwise = c : addToPasscode cs request
@@ -40,10 +38,10 @@ readIntLists path = do
     let fileLines = map (chunksOf 1) $ lines contents
     return $ map (map read) fileLines
 
--- testPasscode :: FilePath -> [Int] -> Bool
+testPasscode :: FilePath -> [Int] -> IO ()
 testPasscode path passcode = do
     lists <- readIntLists path
-    mapM print $ map (\i -> show i ++ ": " ++ show (passcodeWorks passcode i)) lists
+    mapM_ print $ map (\i -> show i ++ ": " ++ show (passcodeWorks passcode i)) lists
 
 makePasscodes :: FilePath -> IO [Int]
 makePasscodes path = do
