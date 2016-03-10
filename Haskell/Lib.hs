@@ -1,8 +1,6 @@
 module Lib (memoize,
-            fibMemo,
             n, z, znonzero,
             sumPattern,
-            constructAggregates,
             insertReplace,
             firstWhere,
             pentagonal,
@@ -10,15 +8,13 @@ module Lib (memoize,
             nubOnSorted,
             divides,
             defaultIfNothing,
-            splitEvery,
             intersperseBy,
-            sieveBy, sieve,
-            genSieve,
-            count,
-            removeAll,
-            countElements,
+            count, countDuplicates, unduplicate,
+            remove, removeAll, setAt,
             differences,
-            factorial) where
+            factorial,
+            pairMap, flipPair, pairRatio,
+            isPermutation) where
 
     import Data.List
     import Data.Ratio
@@ -26,6 +22,24 @@ module Lib (memoize,
     import qualified Data.Map as Map
     import Data.IORef
     import System.IO.Unsafe
+
+    import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    pairMap :: (a -> b) -> (a, a) -> (b, b)
+    pairMap f (a, b) = (f a, f b)
+
+    flipPair :: (a, b) -> (b, a)
+    flipPair (a, b) = (b, a)
+
+    pairRatio :: Integral a => (a, a) -> Ratio a
+    pairRatio (a, b) = a % b
+
+    unduplicate :: [(Int, a)] -> [a]
+    unduplicate [] = []
+    unduplicate ((i, x):xs) = replicate i x ++ unduplicate xs
+
+    isPermutation :: String -> String -> Bool
+    isPermutation a b = sort a == sort b
 
     constant a _ = a
 
@@ -46,12 +60,6 @@ module Lib (memoize,
         | a == b = nubOnSorted (b : vs)
         | otherwise = a : nubOnSorted (b : vs)
 
-    buildAggregates f [] = []
-    buildAggregates f vs = vs : buildAggregates f (concat (map f vs))
-
-    constructAggregates f vs = nub (map sort aggs)
-        where aggs = concat (buildAggregates f vs)
-
     insertReplace vs newV i = take i vs ++ newV ++ drop (i + 1) vs
 
     sumPattern ns pattern = sum (zipWith (*) ns fullPattern)
@@ -61,33 +69,14 @@ module Lib (memoize,
 
     pentagonalNumbers limit = takeWhile (<= limit) (map pentagonal znonzero)
 
-    splitEvery _ [] = []
-    splitEvery n l = take n l : splitEvery n (drop (n + 1) l)
-
     intersperseBy _ [] = []
     intersperseBy f (l:ls) = l ++ [f (last l)] ++ intersperseBy f ls
-
-    sieve n = sieveBy (constant (Just True)) (\(i, _) -> (i + 1, Just False)) [2..n]
-
-    genSieve f gen ns = genSieve' (zip ns (replicate (length ns) Nothing))
-        where genSieve' [] = []
-              genSieve' ((i, Nothing):xs) = case f i of
-                                             Just True -> (i, Just True) : genSieve' (intersperseBy gen (splitEvery (i - 1) xs))
-                                             Just False -> (i, Just False) : genSieve' xs
-              genSieve' ((i, v):xs) = (i, v) : genSieve' xs
-
-    sieveBy f gen ns = map fst $ filter (defaultIfNothing False . snd) $ genSieve f gen ns
 
     n = [1..]
 
     z = 0 : [y | n <- [1..], y <- [n, (-n)]]
 
     znonzero = tail z
-
-    fib 0 = 1
-    fib 1 = 1
-    fib n = fibMemo (n - 1) + fibMemo (n - 2)
-    fibMemo = memoize fib
 
     firstWhere f ls = firstWhere' (dropWhile (not . f) ls)
         where firstWhere' [] = Nothing
@@ -98,16 +87,38 @@ module Lib (memoize,
     defaultIfNothing _ (Just a) = a
     defaultIfNothing def Nothing = def
 
-    count a = length . filter (a ==)
+    halve :: [a] -> ([a], [a])
+    halve [] = ([],[])
+    halve xs = go xs xs
+        where go (x:xs) (_:_:ys) = let (first,last) = go xs ys in (x:first, last)
+              go (x:xs) [_] = ([x],xs)
+              go (x:xs) []  = ([],x:xs)
 
-    removeAll e = filter (/= e)
+    remove :: Eq a => [a] -> a -> [a]
+    remove [] _ = []
+    remove (x:xs) e
+      | x == e = xs
+      | otherwise = x : remove xs e
 
-    countElements [] = []
-    countElements (n:ns) = count n ns : countElements (removeAll n ns)
+    removeAll :: Eq a => [a] -> a -> [a]
+    removeAll xs e = filter (/= e) xs
+
+    count :: (a -> Bool) -> [a] -> Int
+    count _ [] = 0
+    count f (x:xs)
+        | f x = 1 + count f xs
+        | otherwise = count f xs
+
+    countDuplicates :: Eq a => [a] -> [(Int, a)]
+    countDuplicates [] = []
+    countDuplicates (x:xs) = (count (== x) xs + 1, x) : countDuplicates (removeAll xs x)
 
     differences :: Num a => [a] -> [a]
     differences (a:b:[]) = [b - a]
     differences (a:b:bs) = (b - a) : differences (b : bs)
+
+    setAt :: [a] -> Int -> a -> [a]
+    setAt xs i e = take i xs ++ [e] ++ drop (i + 1) xs
 
     factorial n = product [1..n]
 

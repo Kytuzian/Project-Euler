@@ -15,7 +15,7 @@ incrementAt :: [Int] -> Int -> [Int]
 incrementAt xs i = take i xs ++ [e + 1] ++ drop (i + 1) xs
     where e = xs !! i
 
-setAt :: [Int] -> Int -> Int -> [Int]
+setAt :: [a] -> Int -> a -> [a]
 setAt xs i e = take i xs ++ [e] ++ drop (i + 1) xs
 
 incrementDigitsIf :: ([Int] -> Bool) -> [Int] -> Int -> [Int]
