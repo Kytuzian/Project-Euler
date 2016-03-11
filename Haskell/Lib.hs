@@ -1,16 +1,14 @@
 module Lib (memoize,
             n, z, znonzero,
             sumPattern,
-            insertReplace,
-            firstWhere,
-            pentagonal,
-            pentagonalNumbers,
-            nubOnSorted,
+            pentagonal, pentagonalNumbers,
+            nubOnSorted, mapUntil,
+            combinationElements,
             divides,
             defaultIfNothing,
             intersperseBy,
             count, countDuplicates, unduplicate,
-            remove, removeAll, setAt,
+            remove, removeAll, setAt, insertReplace,
             differences,
             factorial,
             pairMap, flipPair, pairRatio,
@@ -40,6 +38,10 @@ module Lib (memoize,
 
     isPermutation :: String -> String -> Bool
     isPermutation a b = sort a == sort b
+
+    combinationElements :: [[a]] -> [[a]]
+    combinationElements (x:[]) = [[i] | i <- x]
+    combinationElements (x:xs) = [i : nc | i <- x, nc <- combinationElements xs]
 
     constant a _ = a
 
@@ -78,11 +80,10 @@ module Lib (memoize,
 
     znonzero = tail z
 
-    firstWhere f ls = firstWhere' (dropWhile (not . f) ls)
-        where firstWhere' [] = Nothing
-              firstWhere' ls = Just (head ls)
-
     divides b a = a `mod` b == 0
+
+    mapUntil :: (a -> b) -> (b -> Bool) -> [a] -> [b]
+    mapUntil f pred = takeWhile pred . map f
 
     defaultIfNothing _ (Just a) = a
     defaultIfNothing def Nothing = def
