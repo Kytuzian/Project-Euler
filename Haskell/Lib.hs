@@ -1,7 +1,7 @@
 module Lib (memoize,
             n, z, znonzero,
             mapPair, flipPair, pairRatio, makePair,
-            sumPattern,
+            sumPattern, sumDigits, digits,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
             nubOnSorted, mapUntil,
@@ -11,7 +11,8 @@ module Lib (memoize,
             intersperseBy,
             count, countDuplicates, unduplicate,
             remove, removeAll, setAt, insertReplace,
-            differences, ratios, ratioTo,
+            flatten, separateList,
+            differences, ratios, ratioTo, evalRatio,
             factorial,
             isPermutation) where
 
@@ -42,6 +43,21 @@ module Lib (memoize,
 
     isPermutation :: String -> String -> Bool
     isPermutation a b = sort a == sort b
+
+    digits :: Integral a => a -> [a]
+    digits n
+        | n < 10 = [n]
+        | otherwise = n `mod` 10 : digits (n `div` 10)
+
+    sumDigits :: Integral a => a -> a
+    sumDigits = sum . digits
+
+    flatten :: [[a]] -> [a]
+    flatten = foldl (++) []
+
+    separateList :: [a] -> [[a]]
+    separateList [] = []
+    separateList (x:xs) = [x] : separateList xs
 
     combinationElements :: [[a]] -> [[a]]
     combinationElements (x:[]) = [[i] | i <- x]
@@ -129,6 +145,9 @@ module Lib (memoize,
     ratios :: Integral a => [a] -> [Ratio a]
     ratios (a:b:[]) = [b % a]
     ratios (a:b:bs) = (b % a) : ratios (b : bs)
+
+    evalRatio :: (Integral a, Fractional b) => Ratio a -> b
+    evalRatio f = (fromIntegral $ numerator f) / (fromIntegral $ denominator f)
 
     triangleNumber :: Integral a => a -> a
     triangleNumber n = n * (n + 1) `div` 2
