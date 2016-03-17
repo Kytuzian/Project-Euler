@@ -4,13 +4,13 @@ module Lib (memoize,
             sumPattern, sumDigits, digits,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
-            nubOnSorted, mapUntil,
-            combinationElements,
+            nubOnSorted, mapUntil, zipTo,
+            combinationElements, sequences,
             divides,
             defaultIfNothing,
             intersperseBy,
             count, countDuplicates, unduplicate,
-            remove, removeAll, setAt, insertReplace,
+            remove, removeAll, setAt, insertReplace, insertAll, insertAllBy,
             flatten, separateList,
             differences, ratios, ratioTo, evalRatio,
             factorial,
@@ -34,8 +34,16 @@ module Lib (memoize,
     pairRatio :: Integral a => (a, a) -> Ratio a
     pairRatio (a, b) = a % b
 
+    sumTuples :: Num a => [(a, a)] -> (a, a)
+    sumTuples ((a, b):[]) = (a, b)
+    sumTuples ((a, b):xs) = (a + na, b + nb)
+        where (na, nb) = sumTuples xs
+
     makePair :: [a] -> (a, a)
     makePair (a:b:_) = (a, b)
+
+    zipTo :: (a -> b) -> [a] -> [(a, b)]
+    zipTo f = map (\i -> (i, f i))
 
     unduplicate :: [(Int, a)] -> [a]
     unduplicate [] = []
@@ -63,6 +71,10 @@ module Lib (memoize,
     combinationElements (x:[]) = [[i] | i <- x]
     combinationElements (x:xs) = [i : nc | i <- x, nc <- combinationElements xs]
 
+    sequences :: [a] -> Int -> [[a]]
+    sequences xs 1 = separateList xs
+    sequences xs i = [x : s | x <- xs, s <- sequences xs (i - 1)]
+
     constant a _ = a
 
     memoize f = unsafePerformIO $ do
@@ -84,6 +96,12 @@ module Lib (memoize,
 
     insertReplace vs newV i = take i vs ++ newV ++ drop (i + 1) vs
 
+    insertAll [] xs = xs
+    insertAll (e:es) xs = insertAll es (insert e xs)
+
+    insertAllBy f [] xs = xs
+    insertAllBy f (e:es) xs = insertAllBy f es (insertBy f e xs)
+
     sumPattern ns pattern = sum (zipWith (*) ns fullPattern)
         where fullPattern = (concat . take (length ns) . repeat) pattern
 
@@ -99,6 +117,8 @@ module Lib (memoize,
     z = 0 : [y | n <- [1..], y <- [n, (-n)]]
 
     znonzero = tail z
+
+    points = [(x, y) | n <- [1..], x <- take n z, y <- take n z]
 
     divides b a = a `mod` b == 0
 
