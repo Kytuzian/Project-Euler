@@ -1,6 +1,6 @@
 module Lib (memoize,
             n, z, znonzero,
-            mapPair, flipPair, pairRatio, makePair,
+            mapPair, flipPair, pairRatio, makePair, makePairs,
             sumPattern, sumDigits, digits,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
@@ -41,6 +41,10 @@ module Lib (memoize,
 
     makePair :: [a] -> (a, a)
     makePair (a:b:_) = (a, b)
+
+    makePairs :: [a] -> [(a, a)]
+    makePairs [] = []
+    makePairs (a:b:xs) = (a, b) : makePairs xs
 
     zipTo :: (a -> b) -> [a] -> [(a, b)]
     zipTo f = map (\i -> (i, f i))
