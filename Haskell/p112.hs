@@ -2,8 +2,6 @@ import Data.Ratio
 
 import Lib (count, digits, testPair, binarySearch)
 
-drev n = reverse $ digits n
-
 isIncreasing :: Integral a => a -> Bool
 isIncreasing n = all (testPair (>=)) $ zip nDigits (tail nDigits)
     where nDigits = digits n
@@ -23,7 +21,6 @@ p112 = do
     res <- binarySearch (\(res, i) -> compare (99 % 100) (res % i)) searchSpace
     return res
 
--- main = print $ isIncreasing 10000
 main = do
     res <- p112
     case res of

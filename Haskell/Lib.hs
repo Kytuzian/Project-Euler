@@ -1,6 +1,6 @@
 module Lib (memoize,
             n, z, znonzero,
-            mapPair, flipPair, pairRatio, makePair, makePairs, testPair,
+            mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs,
             sumPattern, sumDigits, digits,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
@@ -9,7 +9,7 @@ module Lib (memoize,
             divides,
             defaultIfNothing,
             intersperseBy,
-            count, countDuplicates, unduplicate,
+            count, countDuplicates, countDuplicatesBy, unduplicate,
             remove, removeAll, setAt, insertReplace, insertAll, insertAllBy,
             flatten, separateList,
             differences, ratios, ratioTo, evalRatio,
@@ -17,19 +17,26 @@ module Lib (memoize,
             isPermutation,
             crossProduct2D, dotProduct,
             makeTriangle, sameSide, pointIsInTriangle,
-            binarySearch) where
+            binarySearch,
+            rollDice) where
 
     import Data.List
     import Data.Ratio
 
     import qualified Data.Map as Map
     import Data.IORef
+
     import System.IO.Unsafe
+    import System.Random
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
 
     data Triangle = Triangle (Int, Int) (Int, Int) (Int, Int)
         deriving (Show)
+
+    rollDice dice sides = do
+        res <- mapM (\i -> getStdRandom $ randomR (1, sides)) [1..dice]
+        return $ sum res
 
     crossProduct2D :: (Int, Int) -> (Int, Int) -> Int
     crossProduct2D (x1, y1) (x2, y2) = x1 * y2 - y1 * x2
@@ -57,10 +64,11 @@ module Lib (memoize,
     pairRatio :: Integral a => (a, a) -> Ratio a
     pairRatio (a, b) = a % b
 
-    sumTuples :: Num a => [(a, a)] -> (a, a)
-    sumTuples ((a, b):[]) = (a, b)
-    sumTuples ((a, b):xs) = (a + na, b + nb)
-        where (na, nb) = sumTuples xs
+    sumPairs :: Num a => [(a, a)] -> (a, a)
+    sumPairs [] = (0, 0)
+    sumPairs ((a, b):[]) = (a, b)
+    sumPairs ((a, b):xs) = (a + na, b + nb)
+        where (na, nb) = sumPairs xs
 
     makePair :: [a] -> (a, a)
     makePair (a:b:_) = (a, b)
@@ -114,7 +122,7 @@ module Lib (memoize,
     combinationElements (x:[]) = [[i] | i <- x]
     combinationElements (x:xs) = [i : nc | i <- x, nc <- combinationElements xs]
 
-    sequences :: [a] -> Int -> [[a]]
+    sequences :: Integral b => [a] -> b -> [[a]]
     sequences xs 1 = separateList xs
     sequences xs i = [x : s | x <- xs, s <- sequences xs (i - 1)]
 
@@ -187,15 +195,18 @@ module Lib (memoize,
     removeAll :: Eq a => [a] -> a -> [a]
     removeAll xs e = filter (/= e) xs
 
-    count :: (a -> Bool) -> [a] -> Int
+    count :: Integral b => (a -> Bool) -> [a] -> b
     count _ [] = 0
     count f (x:xs)
         | f x = 1 + count f xs
         | otherwise = count f xs
 
-    countDuplicates :: Eq a => [a] -> [(Int, a)]
-    countDuplicates [] = []
-    countDuplicates (x:xs) = (count (== x) xs + 1, x) : countDuplicates (removeAll xs x)
+    countDuplicates :: (Eq a, Integral b) => [a] -> [(b, a)]
+    countDuplicates xs = countDuplicatesBy id xs
+
+    countDuplicatesBy :: (Eq a, Eq b, Integral c) => (a -> b) -> [a] -> [(c, b)]
+    countDuplicatesBy _ [] = []
+    countDuplicatesBy f (x:xs) = (count (\i -> f i == f x) xs + 1, f x) : (countDuplicatesBy f $ filter (\i -> f i /= f x) xs)
 
     differences :: Num a => [a] -> [a]
     differences (a:b:[]) = [b - a]
