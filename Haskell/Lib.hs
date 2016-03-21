@@ -18,7 +18,8 @@ module Lib (memoize,
             crossProduct2D, dotProduct,
             makeTriangle, sameSide, pointIsInTriangle,
             binarySearch,
-            rollDice) where
+            rollDice,
+            padL, padR) where
 
     import Data.List
     import Data.Ratio
@@ -237,6 +238,16 @@ module Lib (memoize,
 
     setAt :: [a] -> Int -> a -> [a]
     setAt xs i e = take i xs ++ [e] ++ drop (i + 1) xs
+
+    padL :: a -> Int -> [a] -> [a]
+    padL e i xs
+        | length xs >= i = xs
+        | otherwise = padL e i (e : xs)
+
+    padR :: a -> Int -> [a] -> [a]
+    padR e i xs
+        | length xs >= i = xs
+        | otherwise = padR e i (xs ++ [e])
 
     factorial n = product [1..n]
 
