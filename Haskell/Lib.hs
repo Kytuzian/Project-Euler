@@ -1,6 +1,6 @@
 module Lib (memoize,
             n, z, znonzero,
-            mapPair, flipPair, pairRatio, makePair, makePairs,
+            mapPair, flipPair, pairRatio, makePair, makePairs, testPair,
             sumPattern, sumDigits, digits,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
@@ -14,7 +14,10 @@ module Lib (memoize,
             flatten, separateList,
             differences, ratios, ratioTo, evalRatio,
             factorial,
-            isPermutation) where
+            isPermutation,
+            crossProduct2D, dotProduct,
+            makeTriangle, sameSide, pointIsInTriangle,
+            binarySearch) where
 
     import Data.List
     import Data.Ratio
@@ -24,6 +27,26 @@ module Lib (memoize,
     import System.IO.Unsafe
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    data Triangle = Triangle (Int, Int) (Int, Int) (Int, Int)
+        deriving (Show)
+
+    crossProduct2D :: (Int, Int) -> (Int, Int) -> Int
+    crossProduct2D (x1, y1) (x2, y2) = x1 * y2 - y1 * x2
+
+    dotProduct :: Num a => [a] -> [a] -> a
+    dotProduct a b = sum $ zipWith (*) a b
+
+    sameSide :: (Int, Int) ->  (Int, Int) ->  (Int, Int) ->  (Int, Int) -> Bool
+    sameSide (p1x,p1y) (p2x,p2y) (ax,ay) (bx,by) = dotProduct [cp1] [cp2] >= 0
+        where cp1 = crossProduct2D ((bx - ax, by - ay)) ((p1x - ax, p1y - ay))
+              cp2 = crossProduct2D ((bx - ax, by - ay)) ((p2x - ax, p2y - ay))
+
+    pointIsInTriangle :: (Int, Int) -> Triangle -> Bool
+    pointIsInTriangle p (Triangle a b c) = sameSide p a b c && sameSide p b a c && sameSide p c a b
+
+    makeTriangle :: [(Int, Int)] -> Triangle
+    makeTriangle (a:b:c:_) = Triangle a b c
 
     mapPair :: (a -> b) -> (a, a) -> (b, b)
     mapPair f (a, b) = (f a, f b)
@@ -46,6 +69,9 @@ module Lib (memoize,
     makePairs [] = []
     makePairs (a:b:xs) = (a, b) : makePairs xs
 
+    testPair :: (a -> a -> Bool) -> (a, a) -> Bool
+    testPair f (a, b) = f a b
+
     zipTo :: (a -> b) -> [a] -> [(a, b)]
     zipTo f = map (\i -> (i, f i))
 
@@ -56,10 +82,23 @@ module Lib (memoize,
     isPermutation :: String -> String -> Bool
     isPermutation a b = sort a == sort b
 
+    binarySearch :: (Show a, Ord a) => (a -> Ordering) -> [a] -> IO (Maybe a)
+    binarySearch _ [] = return Nothing
+    binarySearch f xs = do
+        print $ (head secondHalf, res)
+        case res of
+                EQ -> return $ Just $ head secondHalf
+                GT -> binarySearch f secondHalf
+                LT -> binarySearch f firstHalf
+        where (firstHalf, secondHalf) = halve xs
+              res = f $ head secondHalf
+
     digits :: Integral a => a -> [a]
-    digits n
-        | n < 10 = [n]
-        | otherwise = n `mod` 10 : digits (n `div` 10)
+    digits n = digits' n
+        where digits' n
+                | n < 10 = [n]
+                | otherwise = m : digits' d
+                where (d, m) = n `quotRem` 10
 
     sumDigits :: Integral a => a -> a
     sumDigits = sum . digits
