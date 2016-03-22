@@ -1,6 +1,6 @@
 module Lib (memoize,
             n, z, znonzero,
-            mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs,
+            mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs, pairOverlap,
             third,
             sumPattern, sumDigits, digits, fromDigits,
             pentagonal, pentagonalNumbers, triangleNumber,
@@ -9,7 +9,7 @@ module Lib (memoize,
             combinationElements, sequences,
             divides,
             defaultIfNothing,
-            intersperseBy, groupFromStart,
+            intersperseBy, groupFromStart, groupOverlap,
             count, countDuplicates, countDuplicatesBy, unduplicate,
             remove, removeAll, setAt, insertReplace, insertAll, insertAllBy,
             flatten, separateList,
@@ -44,6 +44,14 @@ module Lib (memoize,
     third (_, _, c) = c
 
     intSqrt = floor . sqrt . fromIntegral
+
+    pairOverlap :: [a] -> [(a, a)]
+    pairOverlap [] = []
+    pairOverlap (x1:x2:xs) = (x1, x2) : pairOverlap (x2:xs)
+
+    groupOverlap :: Int -> [a] -> [[a]]
+    groupOverlap _ [] = []
+    groupOverlap len xs = take len xs : (groupOverlap len $ tail xs)
 
     groupFromStart :: Int -> [a] -> [[a]]
     groupFromStart len l@(x:xs)
