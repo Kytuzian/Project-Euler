@@ -1,10 +1,11 @@
 module Lib (memoize,
             n, z, znonzero,
             mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs,
+            third,
             sumPattern, sumDigits, digits,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
-            nubOnSorted, mapUntil, zipTo,
+            nubOnSorted, mapWhile, zipTo, takeUntil,
             combinationElements, sequences,
             divides,
             defaultIfNothing,
@@ -19,7 +20,8 @@ module Lib (memoize,
             makeTriangle, sameSide, pointIsInTriangle,
             binarySearch,
             rollDice,
-            padL, padR) where
+            padL, padR,
+            ContinuedFraction, cfFromList, cycleCF, evalCF, period, approximateSquareRoot, makeCF) where
 
     import Data.List
     import Data.Ratio
@@ -31,6 +33,50 @@ module Lib (memoize,
     import System.Random
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    third :: (a, b, c) -> c
+    third (_, _, c) = c
+
+    data ContinuedFraction = ContinuedFraction Integer (Integer -> Integer) Integer
+
+    instance Show ContinuedFraction where
+        show (ContinuedFraction a f p)
+            | p >= 0 = "[" ++ show a ++ ";(" ++ (show $ map f [0..p - 1]) ++ ")]"
+            | otherwise = "[" ++ show a ++ ";(" ++ (show $ map f [0..5]) ++ ")]"
+
+    cfFromList :: [Integer] -> ContinuedFraction
+    cfFromList (x:xs) = cycleCF x xs
+
+    period :: ContinuedFraction -> Integer
+    period (ContinuedFraction _ _ p) = p
+
+    cycleCF :: Integer -> [Integer] -> ContinuedFraction
+    cycleCF a bs = ContinuedFraction a ((bs !!) . fromIntegral . (`mod` intLen)) intLen
+        where intLen = toInteger $ length bs
+
+    e :: ContinuedFraction
+    e = ContinuedFraction 2 e' (-1)
+        where e' n = ([1,1] ++ intercalate [1,1] (separateList [2,4..])) !! (fromIntegral n)
+
+    evalCF :: Integer -> ContinuedFraction -> Ratio Integer
+    evalCF 0 (ContinuedFraction a _ _) = a % 1
+    evalCF terms (ContinuedFraction a f _) = (a % 1) + (1 / (evalCF' 0))
+        where evalCF' i
+                | i < terms = ((f i) % 1) + (1 / (evalCF' (i + 1)))
+                | otherwise = (f i) % 1
+
+    approximateSquareRoot :: Integral a => a -> [a]
+    approximateSquareRoot s
+        | sqrtS^2 == s = [sqrtS]
+        | otherwise = takeUntil (/= 2 * sqrtS) $ triplets (0, 1, sqrtS)
+        where triplets (m, d, a) = a : triplets (m_n, d_n, a_n)
+                  where m_n = d * a - m
+                        d_n = (s - m_n^2) `div` d
+                        a_n = (sqrtS + m_n) `div` d_n
+              sqrtS = floor $ sqrt $ fromIntegral s
+
+    makeCF :: Integer -> ContinuedFraction
+    makeCF n = cfFromList $ approximateSquareRoot n
 
     data Triangle = Triangle (Int, Int) (Int, Int) (Int, Int)
         deriving (Show)
@@ -174,8 +220,14 @@ module Lib (memoize,
 
     divides b a = a `mod` b == 0
 
-    mapUntil :: (a -> b) -> (b -> Bool) -> [a] -> [b]
-    mapUntil f pred = takeWhile pred . map f
+    mapWhile :: (a -> b) -> (b -> Bool) -> [a] -> [b]
+    mapWhile f pred = takeWhile pred . map f
+
+    takeUntil :: (a -> Bool) -> [a] -> [a]
+    takeUntil _ [] = []
+    takeUntil f (x:xs)
+        | f x = x : takeUntil f xs
+        | otherwise = [x]
 
     defaultIfNothing _ (Just a) = a
     defaultIfNothing def Nothing = def
