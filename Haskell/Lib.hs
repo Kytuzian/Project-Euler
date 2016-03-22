@@ -2,14 +2,14 @@ module Lib (memoize,
             n, z, znonzero,
             mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs,
             third,
-            sumPattern, sumDigits, digits,
+            sumPattern, sumDigits, digits, fromDigits,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
             nubOnSorted, mapWhile, zipTo, takeUntil,
             combinationElements, sequences,
             divides,
             defaultIfNothing,
-            intersperseBy,
+            intersperseBy, groupFromStart,
             count, countDuplicates, countDuplicatesBy, unduplicate,
             remove, removeAll, setAt, insertReplace, insertAll, insertAllBy,
             flatten, separateList,
@@ -20,10 +20,13 @@ module Lib (memoize,
             makeTriangle, sameSide, pointIsInTriangle,
             binarySearch,
             rollDice,
+            intSqrt, isSquare,
             padL, padR,
-            ContinuedFraction, cfFromList, cycleCF, evalCF, period, approximateSquareRoot, makeCF) where
+            approximateSquareRoot,
+            ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
 
     import Data.List
+    import Data.List.Split
     import Data.Ratio
 
     import qualified Data.Map as Map
@@ -34,8 +37,20 @@ module Lib (memoize,
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
 
+    isSquare :: Integer -> Bool
+    isSquare n = (intSqrt n)^2 == n
+
     third :: (a, b, c) -> c
     third (_, _, c) = c
+
+    intSqrt = floor . sqrt . fromIntegral
+
+    groupFromStart :: Int -> [a] -> [[a]]
+    groupFromStart len l@(x:xs)
+        | length l `mod` 2 > 0 = [x] : groupFromStart' xs
+        | otherwise = groupFromStart' l
+        where groupFromStart' [] = []
+              groupFromStart' xs = take len xs : (groupFromStart' $ drop len xs)
 
     data ContinuedFraction = ContinuedFraction Integer (Integer -> Integer) Integer
 
@@ -65,8 +80,24 @@ module Lib (memoize,
                 | i < terms = ((f i) % 1) + (1 / (evalCF' (i + 1)))
                 | otherwise = (f i) % 1
 
-    approximateSquareRoot :: Integral a => a -> [a]
+    approximateSquareRoot :: Integer -> [Integer]
     approximateSquareRoot s
+        | isSquare s = reverse $ digits $ intSqrt s
+        | otherwise = firstN : approximateSquareRoot' firstN firstPart firstXs
+        where firstN = intSqrt $ fromDigits $ head sDigits
+              firstPart = (fromDigits $ head sDigits) - firstN^2
+              firstXs = tail sDigits ++ chunksOf 2 (repeat 0)
+              sDigits = groupFromStart 2 $ reverse $ digits s
+              approximateSquareRoot' guess part ((x1:x2:[]):xs) = nextN : approximateSquareRoot' nextGuess (curPart - (2 * guess * 10 + nextN) * nextN) xs
+                where nextN = findD (2 * guess) curPart
+                      nextGuess = guess * 10 + nextN
+                      curPart = part * 100 + x1*10 + x2
+              findD x target = case find (\i -> i * (x * 10 + i) <= target) [9,8..1] of
+                                 Just a -> a
+                                 Nothing -> 0
+
+    squareRootCF :: Integral a => a -> [a]
+    squareRootCF s
         | sqrtS^2 == s = [sqrtS]
         | otherwise = takeUntil (/= 2 * sqrtS) $ triplets (0, 1, sqrtS)
         where triplets (m, d, a) = a : triplets (m_n, d_n, a_n)
@@ -76,7 +107,7 @@ module Lib (memoize,
               sqrtS = floor $ sqrt $ fromIntegral s
 
     makeCF :: Integer -> ContinuedFraction
-    makeCF n = cfFromList $ approximateSquareRoot n
+    makeCF n = cfFromList $ squareRootCF n
 
     data Triangle = Triangle (Int, Int) (Int, Int) (Int, Int)
         deriving (Show)
@@ -147,6 +178,10 @@ module Lib (memoize,
                 LT -> binarySearch f firstHalf
         where (firstHalf, secondHalf) = halve xs
               res = f $ head secondHalf
+
+    fromDigits :: Integral a => [a] -> a
+    fromDigits [] = 0
+    fromDigits (x:xs) = x * 10^(length xs) + fromDigits xs
 
     digits :: Integral a => a -> [a]
     digits n = digits' n
