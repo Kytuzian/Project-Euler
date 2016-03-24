@@ -11,8 +11,9 @@ module Lib (memoize,
             defaultIfNothing,
             intersperseBy, groupFromStart, groupOverlap,
             count, countDuplicates, countDuplicatesBy, unduplicate,
-            remove, removeAll, setAt, insertReplace, insertAll, insertAllBy,
+            remove, removeAll, setAt, setAt2, insertReplace, insertAll, insertAllBy,
             flatten, separateList,
+            startsWith, startsWithAny,
             differences, ratios, ratioTo, evalRatio,
             factorial,
             isPermutation,
@@ -23,10 +24,11 @@ module Lib (memoize,
             intSqrt, isSquare,
             padL, padR,
             approximateSquareRoot,
+            truncates,
             ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
 
     import Data.List
-    import Data.List.Split
+    import Data.List.Split (chunksOf)
     import Data.Ratio
 
     import qualified Data.Map as Map
@@ -36,6 +38,27 @@ module Lib (memoize,
     import System.Random
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    startsWith :: Eq a => [a] -> [a] -> Bool
+    startsWith [] [] = True
+    startsWith [] _ = False
+    startsWith _ [] = True
+    startsWith (a:as) (b:bs)
+        | a == b = startsWith as bs
+        | otherwise = False
+
+    startsWithAny :: Eq a => [a] -> [[a]] -> Bool
+    startsWithAny s ps = any (startsWith s) ps
+
+    partialSums :: Num a => [a] -> [a]
+    partialSums xs = partialSums' 0 xs
+        where partialSums' i [] = [i]
+              partialSums' i (x:xs) = i + x : partialSums' (i + x) xs
+
+    truncates :: Integral a => a -> [a]
+    truncates n = truncates' $ init $ reverse $ digits n
+        where truncates' [] = []
+              truncates' xs = fromDigits xs : truncates' (init xs)
 
     isSquare :: Integer -> Bool
     isSquare n = (intSqrt n)^2 == n
@@ -333,6 +356,9 @@ module Lib (memoize,
 
     setAt :: [a] -> Int -> a -> [a]
     setAt xs i e = take i xs ++ [e] ++ drop (i + 1) xs
+
+    setAt2 :: [[a]] -> (Int, Int) -> a -> [[a]]
+    setAt2 xs (x, y) e = take y xs ++ [(setAt (xs !! y) x e)] ++ drop (y + 1) xs
 
     padL :: a -> Int -> [a] -> [a]
     padL e i xs
