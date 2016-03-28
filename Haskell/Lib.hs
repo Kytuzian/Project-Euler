@@ -25,8 +25,9 @@ module Lib (memoize,
             padL, padR,
             approximateSquareRoot,
             truncates,
-            factor,
+            factor, primeTau,
             pascalsTriangle,
+            allProducts,
             ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
 
     import Data.List
@@ -40,6 +41,17 @@ module Lib (memoize,
     import System.Random
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    allProducts :: (Ord a, Num a) => a -> [a] -> [a]
+    allProducts _ [] = []
+    allProducts limit (n:ns) = allProducts' (n:ns) ++ allProducts limit ns
+        where allProducts' [] = []
+              allProducts' (x:xs)
+                | n * x > limit = []
+                | otherwise = n * x : allProducts' xs
+
+    primeTau :: Integral a => a -> a
+    primeTau n = fromIntegral $ snd $ sumPairs $ Factorisation.factorise $ fromIntegral n
 
     factor :: Integral a => a -> [a]
     factor n = map fromIntegral $ unduplicate $ map flipPair $ Factorisation.factorise $ fromIntegral n
@@ -184,7 +196,7 @@ module Lib (memoize,
     pairRatio :: Integral a => (a, a) -> Ratio a
     pairRatio (a, b) = a % b
 
-    sumPairs :: Num a => [(a, a)] -> (a, a)
+    sumPairs :: (Num a, Num b) => [(a, b)] -> (a, b)
     sumPairs [] = (0, 0)
     sumPairs ((a, b):[]) = (a, b)
     sumPairs ((a, b):xs) = (a + na, b + nb)
