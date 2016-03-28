@@ -25,6 +25,8 @@ module Lib (memoize,
             padL, padR,
             approximateSquareRoot,
             truncates,
+            factor,
+            pascalsTriangle,
             ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
 
     import Data.List
@@ -38,6 +40,9 @@ module Lib (memoize,
     import System.Random
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    factor :: Integral a => a -> [a]
+    factor n = map fromIntegral $ unduplicate $ map flipPair $ Factorisation.factorise $ fromIntegral n
 
     startsWith :: Eq a => [a] -> [a] -> Bool
     startsWith [] [] = True
@@ -68,8 +73,14 @@ module Lib (memoize,
 
     intSqrt = floor . sqrt . fromIntegral
 
+    pascalsTriangle :: Integral a => [[a]]
+    pascalsTriangle = pascalsTriangle' [1]
+        where pascalsTriangle' ns = ns : pascalsTriangle' nextNs
+                where nextNs = 1 : ((map (\(a, b) -> a + b) $ pairOverlap ns) ++ [1])
+
     pairOverlap :: [a] -> [(a, a)]
     pairOverlap [] = []
+    pairOverlap (x:[]) = []
     pairOverlap (x1:x2:xs) = (x1, x2) : pairOverlap (x2:xs)
 
     groupOverlap :: Int -> [a] -> [[a]]
