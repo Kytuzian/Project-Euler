@@ -28,6 +28,8 @@ module Lib (memoize,
             factor, primeTau,
             pascalsTriangle,
             allProducts,
+            sumProperDivisors,
+            showProgressZipped,
             ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
 
     import Data.List
@@ -35,12 +37,20 @@ module Lib (memoize,
     import Data.Ratio
 
     import qualified Data.Map as Map
+    import qualified Data.Set as Set
     import Data.IORef
 
     import System.IO.Unsafe
     import System.Random
 
+    import System.ProgressBar
+
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    showProgressZipped limit res = mapM_ (\(i, _) -> progressBar (msg (show i ++ " of " ++ show limit)) percentage 80 i limit) res
+
+    sumProperDivisors :: Integral a => a -> a
+    sumProperDivisors n = fromIntegral $ sum $ init $ Set.toList $ Factorisation.divisors $ fromIntegral n
 
     allProducts :: (Ord a, Num a) => a -> [a] -> [a]
     allProducts _ [] = []
