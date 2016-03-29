@@ -29,7 +29,8 @@ module Lib (memoize,
             pascalsTriangle,
             allProducts,
             sumProperDivisors,
-            showProgressZipped,
+            showProgressZipped, showProgress,
+            incrementAt, incrementDigitsIf,
             ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
 
     import Data.List
@@ -47,7 +48,19 @@ module Lib (memoize,
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
 
+    incrementAt :: Integral a => [a] -> Int -> [a]
+    incrementAt xs i = take i xs ++ [e + 1] ++ drop (i + 1) xs
+        where e = xs !! i
+
+    incrementDigitsIf :: Integral a => ([a] -> Bool) -> [a] -> [a]
+    incrementDigitsIf f ns = incrementDigitsIf' ns 0
+        where incrementDigitsIf' ds i
+                | i >= length ds = ds ++ [0]
+                | f (incrementAt ds i) = incrementAt ds i
+                | otherwise = incrementDigitsIf' (setAt ds i 0) (i + 1)
+
     showProgressZipped limit res = mapM_ (\(i, _) -> progressBar (msg (show i ++ " of " ++ show limit)) percentage 80 i limit) res
+    showProgress limit res = mapM_ (\i -> progressBar (msg (show i ++ " of " ++ show limit)) percentage 80 i limit) res
 
     sumProperDivisors :: Integral a => a -> a
     sumProperDivisors n = fromIntegral $ sum $ init $ Set.toList $ Factorisation.divisors $ fromIntegral n
