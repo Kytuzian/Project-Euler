@@ -20,5 +20,5 @@ generateHammingNumbers n limit = generateHammingNumbers' $ replicate (length ps)
 main = do
     let limit = 10^9
     let ns = generateHammingNumbers 100 limit
-    mapM_ print ns
+    -- mapM_ print ns
     print $ length ns
