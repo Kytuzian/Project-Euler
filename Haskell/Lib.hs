@@ -6,7 +6,7 @@ module Lib (memoize,
             pentagonal, pentagonalNumbers, triangleNumber,
             quadratic, intQuadratic,
             nubOnSorted, mapWhile, zipTo, takeUntil,
-            combinationElements, sequences,
+            combinationElements, sequences, permutationsOf,
             divides,
             defaultIfNothing,
             intersperseBy, groupFromStart, groupOverlap,
@@ -30,11 +30,11 @@ module Lib (memoize,
             allProducts,
             sumProperDivisors,
             showProgressZipped, showProgress,
-            incrementAt, incrementDigitsIf,
+            incrementAt, incrementDigitsIf, incrementDigitsToIf,
             ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
 
     import Data.List
-    import Data.List.Split (chunksOf)
+    import Data.List.Split (chunksOf, splitOn)
     import Data.Ratio
 
     import qualified Data.Map as Map
@@ -48,16 +48,23 @@ module Lib (memoize,
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
 
+    wordList = do
+        contents <- readFile "/usr/share/dict/words"
+        return $ splitOn "\n" contents
+
     incrementAt :: Integral a => [a] -> Int -> [a]
     incrementAt xs i = take i xs ++ [e + 1] ++ drop (i + 1) xs
         where e = xs !! i
 
-    incrementDigitsIf :: Integral a => ([a] -> Bool) -> [a] -> [a]
-    incrementDigitsIf f ns = incrementDigitsIf' ns 0
-        where incrementDigitsIf' ds i
+    incrementDigitsToIf :: Integral a => a -> ([a] -> Bool) -> [a] -> [a]
+    incrementDigitsToIf v f ns = incrementDigitsToIf' ns 0
+        where incrementDigitsToIf' ds i
                 | i >= length ds = ds ++ [0]
                 | f (incrementAt ds i) = incrementAt ds i
-                | otherwise = incrementDigitsIf' (setAt ds i 0) (i + 1)
+                | otherwise = incrementDigitsToIf' (setAt ds i v) (i + 1)
+
+    incrementDigitsIf :: Integral a => ([a] -> Bool) -> [a] -> [a]
+    incrementDigitsIf f ns = incrementDigitsToIf 0 f ns
 
     showProgressZipped limit res = mapM_ (\(i, _) -> progressBar (msg (show i ++ " of " ++ show limit)) percentage 80 i limit) res
     showProgress limit res = mapM_ (\i -> progressBar (msg (show i ++ " of " ++ show limit)) percentage 80 i limit) res
@@ -100,12 +107,13 @@ module Lib (memoize,
         where truncates' [] = []
               truncates' xs = fromDigits xs : truncates' (init xs)
 
-    isSquare :: Integer -> Bool
+    isSquare :: Integral a => a -> Bool
     isSquare n = (intSqrt n)^2 == n
 
     third :: (a, b, c) -> c
     third (_, _, c) = c
 
+    intSqrt :: Integral a => a -> a
     intSqrt = floor . sqrt . fromIntegral
 
     pascalsTriangle :: Integral a => [[a]]
@@ -360,18 +368,22 @@ module Lib (memoize,
     removeAll :: Eq a => [a] -> a -> [a]
     removeAll xs e = filter (/= e) xs
 
-    count :: Integral b => (a -> Bool) -> [a] -> b
+    count :: Num b => (a -> Bool) -> [a] -> b
     count _ [] = 0
     count f (x:xs)
         | f x = 1 + count f xs
         | otherwise = count f xs
 
-    countDuplicates :: (Eq a, Integral b) => [a] -> [(b, a)]
+    countDuplicates :: (Eq a, Num b) => [a] -> [(b, a)]
     countDuplicates xs = countDuplicatesBy id xs
 
-    countDuplicatesBy :: (Eq a, Eq b, Integral c) => (a -> b) -> [a] -> [(c, b)]
+    countDuplicatesBy :: (Eq a, Eq b, Num c) => (a -> b) -> [a] -> [(c, b)]
     countDuplicatesBy _ [] = []
     countDuplicatesBy f (x:xs) = (count (\i -> f i == f x) xs + 1, f x) : (countDuplicatesBy f $ filter (\i -> f i /= f x) xs)
+
+    permutationsOf :: (Eq a, Integral b) => [a] -> b -> [[a]]
+    permutationsOf xs 1 = separateList xs
+    permutationsOf xs i = [x : s | x <- xs, s <- permutations (remove xs x) (i - 1)]
 
     differences :: Num a => [a] -> [a]
     differences (a:b:[]) = [b - a]
