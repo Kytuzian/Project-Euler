@@ -383,7 +383,7 @@ module Lib (memoize,
 
     permutationsOf :: (Eq a, Integral b) => [a] -> b -> [[a]]
     permutationsOf xs 1 = separateList xs
-    permutationsOf xs i = [x : s | x <- xs, s <- permutations (remove xs x) (i - 1)]
+    permutationsOf xs i = [x : s | x <- xs, s <- permutationsOf (remove xs x) (i - 1)]
 
     differences :: Num a => [a] -> [a]
     differences (a:b:[]) = [b - a]
