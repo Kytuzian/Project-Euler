@@ -1,6 +1,8 @@
 module Lib (memoize,
+            (!!!), inMatrix,
             n, z, znonzero,
-            mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs, pairOverlap,
+            mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs, pairOverlap, unPair,
+            sumPair,
             third,
             sumPattern, sumDigits, digits, fromDigits,
             pentagonal, pentagonalNumbers, triangleNumber,
@@ -21,7 +23,7 @@ module Lib (memoize,
             makeTriangle, sameSide, pointIsInTriangle,
             binarySearch,
             rollDice,
-            intSqrt, isSquare,
+            intSqrt, isSquare, squares,
             padL, padR,
             approximateSquareRoot,
             truncates,
@@ -31,7 +33,10 @@ module Lib (memoize,
             sumProperDivisors,
             showProgressZipped, showProgress,
             incrementAt, incrementDigitsIf, incrementDigitsToIf,
-            ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF) where
+            ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF,
+            minimumIndex, maximumIndex, minimumIndexBy, maximumIndexBy,
+            Tree, allTrees,
+            distance) where
 
     import Data.List
     import Data.List.Split (chunksOf, splitOn)
@@ -47,6 +52,31 @@ module Lib (memoize,
     import System.ProgressBar
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    distance :: (Integral a, Floating b) => (a, a) -> (a, a) -> b
+    distance (x1, y1) (x2, y2) = sqrt $ (x1f - x2f)**2 + (y1f - y2f)**2
+        where (x1f, y1f) = (fromIntegral x1, fromIntegral y1)
+              (x2f, y2f) = (fromIntegral x2, fromIntegral y2)
+
+    data Tree a = Node a [Tree a] | Value a
+
+    allTrees :: Tree a -> [[a]]
+    allTrees (Value a) = [[a]]
+    allTrees (Node a ts) = [a : at | t <- map allTrees ts, at <- t]
+
+    sumPair :: Num a => (a, a) -> (a, a) -> (a, a)
+    (a1, b1) `sumPair` (a2, b2) = (a1 + a2, b1 + b2)
+
+    inMatrix :: [[a]] -> (Int, Int) -> Bool
+    inMatrix matrix (x, y)
+        | x < 0 || y < 0 = False
+        | length matrix <= y = False
+        | length (matrix !! y) <= x = False
+        | otherwise = True
+
+    (!!!) :: Integral b => [[a]] -> (b, b) -> a
+    xss !!! cs = (xss !! y) !! x
+        where (x, y) = mapPair fromIntegral cs
 
     wordList = do
         contents <- readFile "/usr/share/dict/words"
@@ -110,6 +140,8 @@ module Lib (memoize,
     isSquare :: Integral a => a -> Bool
     isSquare n = (intSqrt n)^2 == n
 
+    squares = map (^2) [1..]
+
     third :: (a, b, c) -> c
     third (_, _, c) = c
 
@@ -125,6 +157,9 @@ module Lib (memoize,
     pairOverlap [] = []
     pairOverlap (x:[]) = []
     pairOverlap (x1:x2:xs) = (x1, x2) : pairOverlap (x2:xs)
+
+    unPair :: (a, a) -> [a]
+    unPair (a, b) = [a, b]
 
     groupOverlap :: Int -> [a] -> [[a]]
     groupOverlap _ [] = []
@@ -279,7 +314,8 @@ module Lib (memoize,
     sumDigits = sum . digits
 
     flatten :: [[a]] -> [a]
-    flatten = foldl (++) []
+    flatten [] = []
+    flatten (x:xs) = x ++ flatten xs
 
     separateList :: [a] -> [[a]]
     separateList [] = []
@@ -351,6 +387,26 @@ module Lib (memoize,
 
     defaultIfNothing _ (Just a) = a
     defaultIfNothing def Nothing = def
+
+    minimumIndexBy :: Ord b => (a -> b) -> [a] -> (Int, a)
+    minimumIndexBy f (x:xs) = (i, a)
+        where (a, i) = foldl cmpf (x, 0) $ zip xs [1..]
+              cmpf (a, ai) (b, bi)
+                | f a < f b = (a, ai)
+                | otherwise = (b, bi)
+
+    minimumIndex :: (Ord a) => [a] -> (Int, a)
+    minimumIndex xs = minimumIndexBy id xs
+
+    maximumIndex :: (Ord a) => [a] -> (Int, a)
+    maximumIndex xs = maximumIndexBy id xs
+
+    maximumIndexBy :: Ord b => (a -> b) -> [a] -> (Int, a)
+    maximumIndexBy f (x:xs) = (i, a)
+        where (a, i) = foldl cmpf (x, 0) $ zip xs [1..]
+              cmpf (a, ai) (b, bi)
+                | f a > f b = (a, ai)
+                | otherwise = (b, bi)
 
     halve :: [a] -> ([a], [a])
     halve [] = ([],[])
