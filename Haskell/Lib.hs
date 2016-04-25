@@ -2,7 +2,7 @@ module Lib (memoize,
             (!!!), inMatrix,
             n, z, znonzero,
             mapPair, flipPair, pairRatio, makePair, makePairs, testPair, sumPairs, pairOverlap, unPair,
-            sumPair,
+            sumPair, eitherInPair,
             third,
             sumPattern, sumDigits, digits, fromDigits,
             pentagonal, pentagonalNumbers, triangleNumber,
@@ -36,7 +36,8 @@ module Lib (memoize,
             ContinuedFraction, cfFromList, cycleCF, evalCF, period, squareRootCF, makeCF,
             minimumIndex, maximumIndex, minimumIndexBy, maximumIndexBy,
             Tree, allTrees,
-            distance) where
+            distance,
+            filterMap) where
 
     import Data.List
     import Data.List.Split (chunksOf, splitOn)
@@ -52,6 +53,21 @@ module Lib (memoize,
     import System.ProgressBar
 
     import qualified Math.NumberTheory.Primes.Factorisation as Factorisation
+
+    combinePair :: (a -> b) -> (b -> b -> c) -> (a, a) -> c
+    combinePair f c (a, b) = (f a) `c` (f b)
+
+    bothInPair :: (a -> Bool) -> (a, a) -> Bool
+    bothInPair f pair = combinePair f (&&) pair
+
+    eitherInPair :: (a -> Bool) -> (a, a) -> Bool
+    eitherInPair f pair = combinePair f (||) pair
+
+    filterMap :: (a -> Maybe b) -> [a] -> [b]
+    filterMap _ [] = []
+    filterMap f (x:xs) = case f x of
+                            Nothing -> filterMap f xs
+                            Just v -> v : filterMap f xs
 
     distance :: (Integral a, Floating b) => (a, a) -> (a, a) -> b
     distance (x1, y1) (x2, y2) = sqrt $ (x1f - x2f)**2 + (y1f - y2f)**2
