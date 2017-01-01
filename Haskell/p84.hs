@@ -104,12 +104,16 @@ moveN s i game = do
 
 -- doIt :: Int -> IO [(String, Float)]
 doIt n = do
-    (board, freq, prevMoves, s) <- moveN n n (return $ newGame 4)
-    -- return $ sortBy (comparing snd) $ Map.toList freq
-    let highest = map fst $ take 3 $ reverse $ getSquareFreq freq
-    let result = catMaybes $ map (\h -> findIndex (== h) monopoly) highest
-    return $ (foldl1 (++) $ map (lpad 2 '0' . show) $ result, result)
+    (board, freq, prevMoves, s) <- moveN n n (return $ newGame 6)
+    let res = Map.toList freq
+    let total = sum $ map snd res
+    let finalRes = map (\(s, v) -> (s, fromIntegral v / fromIntegral total * 100)) res
+    return $ sortBy (comparing snd) finalRes
+    -- let highest = map fst $ take 3 $ reverse $ getSquareFreq freq
+    -- let result = catMaybes $ map (\h -> findIndex (== h) monopoly) highest
+    -- return $ (foldl1 (++) $ map (lpad 2 '0' . show) $ result, result)
 
 main = do
-    res <- doIt 50000
+    res <- doIt (3*10^7)
+    putStrLn ""
     print res

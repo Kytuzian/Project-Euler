@@ -4,9 +4,6 @@ import System.IO
 elemBy :: Eq b => (a -> b) -> a -> [a] -> Bool
 elemBy f e xs = (f e) `elem` (map f xs)
 
-isProductSum :: Integral a => [a] -> Bool
-isProductSum ns = sum ns == product ns
-
 allProds n = reverse $ allProds' n 2
     where allProds' 1 _ = [[]]
           allProds' x mind = [d : p| d <- [mind..x], x `mod` d == 0, p <- allProds' (x `div` d) d]
