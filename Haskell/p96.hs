@@ -49,29 +49,29 @@ deductSolve sudoku = case nextSudoku == sudoku of
 
 -- Just try all the possible values
 -- If we can't solve it, function will return Nothing
-finalSolve :: Sudoku -> Maybe Sudoku
+-- finalSolve :: Sudoku -> Maybe Sudoku
 finalSolve inSudoku
     -- If any of the squares have no possibilities, clearly there is something wrong.
     | any (null . snd) allPossible = Nothing
     | otherwise = case nextUnknown of
                         -- There are no more unknowns, so we're probably done
                         Nothing -> case isSolution sudoku of
-                                    True -> Just sudoku
-                                    False -> Nothing
+                                        True -> Just sudoku
+                                        False -> Nothing
                         Just ((x,y), vals) -> case find isJust $ map finalSolve $ allNextSudoku (x,y) vals of
-                                                Nothing -> Nothing
-                                                Just Nothing -> Nothing
-                                                -- A final check, just in case
-                                                Just (Just final) -> case isSolution final of
-                                                                True -> Just final
-                                                                False -> Nothing
+                                                    Nothing -> Nothing
+                                                    Just Nothing -> Nothing -- Should never happen
+                                                    -- A final check, just in case
+                                                    Just (Just final) -> case isSolution final of
+                                                                            True -> Just final
+                                                                            False -> Nothing
     where sudoku = deductSolve inSudoku
           allPossible = getAllPossibleNumbers sudoku
           nextUnknown = find (\(_, vals) -> length vals > 1) allPossible
           allNextSudoku (x, y) vals = allNextSudoku' vals
             where allNextSudoku' [] = []
                   allNextSudoku' (v:vs) = (remakeBoard $ nextPossible) : allNextSudoku' vs
-                    where nextPossible = setAt allPossible (x * 3 + y) ((x,y),[v])
+                    where nextPossible = setAt allPossible (x * 9 + y) ((x,y),[v])
 
 test :: Sudoku
 test = Sudoku [[0,0,3,0,2,0,6,0,0],[9,0,0,3,0,5,0,0,1],[0,0,1,8,0,6,4,0,0],[0,0,8,1,0,2,9,0,0],[7,0,0,0,0,0,0,0,8],[0,0,6,7,0,8,2,0,0],[0,0,2,6,0,9,5,0,0],[8,0,0,2,0,3,0,0,9],[0,0,5,0,1,0,3,0,0]]
