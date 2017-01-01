@@ -1,4 +1,5 @@
 import Data.List
+import Data.List.Split
 import Data.Maybe
 
 import Lib ((!!!), setAt, setAt2)
@@ -32,7 +33,7 @@ remakeBoard = Sudoku . foldl repf base
     where base = replicate 9 $ replicate 9 0
           repf cur (pos, val) = setAt2 cur pos actualVal
             where actualVal = case val of
-                                      [] -> error "No possible values."
+                                      [] -> 0
                                       (x:[]) -> x
                                       _ -> 0
 
@@ -71,7 +72,7 @@ finalSolve inSudoku
           allNextSudoku (x, y) vals = allNextSudoku' vals
             where allNextSudoku' [] = []
                   allNextSudoku' (v:vs) = (remakeBoard $ nextPossible) : allNextSudoku' vs
-                    where nextPossible = setAt allPossible (x * 9 + y) ((x,y),[v])
+                    where nextPossible = setAt allPossible (x * 9 + y) ((x,y), [v])
 
 test :: Sudoku
 test = Sudoku [[0,0,3,0,2,0,6,0,0],[9,0,0,3,0,5,0,0,1],[0,0,1,8,0,6,4,0,0],[0,0,8,1,0,2,9,0,0],[7,0,0,0,0,0,0,0,8],[0,0,6,7,0,8,2,0,0],[0,0,2,6,0,9,5,0,0],[8,0,0,2,0,3,0,0,9],[0,0,5,0,1,0,3,0,0]]
@@ -80,4 +81,26 @@ test2 :: Sudoku
 test2 = Sudoku [[0,0,0,0,0,8,0,4,9],[0,8,0,0,0,4,5,7,6],[6,0,0,2,0,0,3,0,1],[7,9,0,5,2,0,0,0,0],[0,5,0,0,0,0,0,6,0],[0,0,0,0,4,9,0,1,5],[9,0,8,0,0,7,0,0,3],[1,4,7,9,0,0,0,5,0],[5,3,0,4,0,0,0,0,0]]
 
 readSudoku :: [String] -> Sudoku
-readSudoku ls = Sudoku $ map (map read) $ map (:[]) ls
+readSudoku ls = Sudoku $ map (map read) $ map (chunksOf 1) ls
+
+readSudokus :: FilePath -> IO [Sudoku]
+readSudokus path = do
+    contents <- readFile path
+    let puzzles = map tail $ chunksOf 10 $ lines contents
+    return $ map readSudoku puzzles
+
+fromDigits :: Integral a => [a] -> a
+fromDigits (d:ds) = foldl (\a b -> 10 * a + b) d ds
+
+getBoard :: Sudoku -> [[Int]]
+getBoard (Sudoku board) = board
+
+main = do
+    puzzles <- readSudokus "p096_sudoku.txt"
+    -- print puzzles
+    let solutions = map finalSolve puzzles
+    mapM_ (\(i, sol) -> putStrLn $ show i ++ "\n" ++ show sol) $ zip [1..] solutions
+    let nums = map (take 3 . head . getBoard . fromJust) solutions
+    print nums
+    print $ map fromDigits nums
+    print $ sum $ map fromDigits nums
