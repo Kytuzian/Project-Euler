@@ -1,5 +1,3 @@
-import Lib (intSqrt)
-
 import qualified Data.Map as Map
 
 import System.ProgressBar
@@ -30,6 +28,9 @@ sieve limit = sieve' (Map.fromList $ zip [2..limit] (repeat True)) 2
                                             Just True -> Just i
                             | otherwise = Nothing
 
+-- Because the limit for this problem is only 10^7, 10^4 is more than enough
+-- Because it only needs to be the square root of 10^7.
+-- Obviously this needs to change if the other limit is higher.
 primes = sieve (10^4)
 
 -- factor :: Integer -> [(Integer, Int)]
@@ -42,9 +43,9 @@ factor n = factor' n primes
             | otherwise = factor' nextCur is
             where (nextCur, count) = getDivCount cur 0
                   getDivCount v count
-                    | v `mod` i == 0 = getDivCount (v `div` i) (count + 1)
-                    | count > 0 = (v, count)
-                    | otherwise = (v, 0)
+                    | r == 0 = getDivCount nextV (count + 1)
+                    | otherwise = (v, count)
+                    where (nextV, r) = v `divMod` i
 
 -- d :: Integral a => a -> Int
 d n = product $ map ((+ 1) . snd) $ factor n
@@ -54,8 +55,8 @@ p179 ns = length $ filter id $ zipWith (==) ns (drop 1 ns)
 main = do
     let limit = 10^7
     let divisors = zip [1..] $ map d [1..limit]
-    -- mapM_ (\i -> putStr $ "\r" ++ show i) divisors
-    -- putStrLn ""
+    mapM_ (\i -> putStr $ "\r" ++ show i) divisors
+    putStrLn ""
 
     let res = p179 $ map snd divisors
     print res
