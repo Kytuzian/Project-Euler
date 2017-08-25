@@ -20,6 +20,9 @@ showSum vals = showSum' vals 0
 
 main = do
     let limit = 10^9
+    mapM_ print  $ [(a,a,c) | c <- [2..limit], let a = c - 1,
+                            2 * a + c < limit,
+                            isAlmostEquilateral a a c]
     res <- showSum [round (2 * a + c) | c <- [2..limit], let a = c - 1,
                             2 * a + c < limit,
                             isAlmostEquilateral a a c]

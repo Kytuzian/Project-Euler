@@ -2,8 +2,6 @@ import qualified Math.NumberTheory.Primes as Primes
 
 import Data.List
 
-import Lib (memoize)
-
 sumPrimePower :: [Int] -> Int
 sumPrimePower ns = sum $ zipWith (^) ns [2..]
 
