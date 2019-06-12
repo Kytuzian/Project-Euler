@@ -2,6 +2,8 @@
 (define (even n) (divides 2 n))
 (define (odd n) (not (even n)))
 
+(define (square x) (* x x))
+
 (define (sum xs) (fold-left + 0 xs))
 
 (define (fib n) (fibc 0 1 n))
@@ -10,6 +12,13 @@
   (if (< a n)
     (cons a (fibc b (+ a b) n))
     '()))
+
+(define (isprime n)
+  (if (< n 1)
+    #f
+    (if (= n 2)
+      #t
+      (not (any (lambda (d) (divides d n)) (iota (quotient n 2) 2))))))
 
 (define (factor n)
   (if (= n 1)
@@ -48,4 +57,11 @@
 
 (define (flatten ls)
   (fold-left append '() ls))
+
+; a^b mod n ≡ a * (b mod 2) * ((a*a)^(b / 2) mod n)
+(define (powmod a b n)
+  (if (<= b 1)
+    (modulo (expt a b) n)
+    (modulo (* (if (= 1 (modulo b 2)) a 1)
+                (powmod (expt a 2) (quotient b 2) n)) n)))
 
